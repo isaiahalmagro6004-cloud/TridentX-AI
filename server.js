@@ -13,7 +13,7 @@ const app = express();
 const PORT = 3000;
 
 // Replace with your Groq API key locally or set GROQ_API_KEY in your environment
-const GROQ_API_KEY = process.env.GROQ_API_KEY || "YOUR_GROQ_API_KEY_HERE";
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 
