@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TridentX AI — Your Intelligent Assistant</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #1e293b;
+        --primary: #1e40af;
+        --accent: #7c3aed;
+        --border: rgba(148, 163, 184, 0.16);
+        --text: #f1f5f9;
+        --muted: #94a3b8;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Header */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(15, 23, 42, 0.94);
+        backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 16px;
+      }
+
+      .header-inner {
+        max-width: 960px;
+        margin: 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo-wrap {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 0 18px rgba(124, 58, 237, 0.35), 0 0 8px rgba(30, 64, 175, 0.45);
+        flex-shrink: 0;
+      }
+
+      .logo-spin {
+        animation: spinLogo 16s linear infinite;
+      }
+
+      @keyframes spinLogo {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+
+      .brand-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+
+      .brand-tagline {
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+
+      .tabs {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .tab-btn {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid transparent;
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.18s ease;
+      }
+
+      .tab-btn:hover {
+        color: #fff;
+        background: rgba(30, 41, 59, 0.7);
+      }
+
+      .tab-btn.active {
+        color: #fff;
+        background: var(--card);
+        border-color: rgba(124, 58, 237, 0.55);
+      }
+
+      /* Main Layout */
+      main {
+        flex: 1;
+        width: 100%;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .panel {
+        display: none;
+        flex: 1;
+        flex-direction: column;
+      }
+
+      .panel.active {
+        display: flex;
+      }
+
+      /* Chat Panel */
+      .chat-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .btn {
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.18s ease;
+      }
+
+      .btn:hover {
+        border-color: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        border-color: transparent;
+        color: #fff;
+      }
+
+      .messages {
+        flex: 1;
+        min-height: 52vh;
+        max-height: 64vh;
+        overflow-y: auto;
+        background: rgba(30, 41, 59, 0.45);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .empty-state {
+        margin: auto;
+        text-align: center;
+        max-width: 440px;
+        padding: 24px 12px;
+      }
+
+      .empty-state h2 {
+        margin-top: 14px;
+        font-size: 1.3rem;
+      }
+
+      .empty-state p {
+        margin-top: 6px;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      .msg-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .msg-row.user {
+        justify-content: flex-end;
+      }
+
+      .bubble {
+        max-width: 82%;
+        padding: 12px 15px;
+        border-radius: 16px;
+        font-size: 0.94rem;
+        line-height: 1.55;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      .msg-row.user .bubble {
+        background: linear-gradient(135deg, var(--primary), var(--accent));
+        color: #fff;
+        border-bottom-right-radius: 4px;
+      }
+
+      .msg-row.assistant .bubble {
+        background: var(--card);
+        border: 1px solid var(--border);
+        color: var(--text);
+        border-bottom-left-radius: 4px;
+      }
+
+      .avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
+      }
+
+      /* Typing Indicator */
+      .typing {
+        display: inline-flex;
+        gap: 5px;
+        align-items: center;
+        padding: 4px 2px;
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #a78bfa;
+        animation: bounce 1.2s infinite ease-in-out;
+      }
+
+      .dot:nth-child(2) { animation-delay: 0.16s; }
+      .dot:nth-child(3) { animation-delay: 0.32s; }
+
+      @keyframes bounce {
+        0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+        40% { transform: translateY(-5px); opacity: 1; }
+      }
+
+      /* Composer */
+      .composer {
+        margin-top: 12px;
+        display: flex;
+        gap: 8px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 8px;
+      }
+
+      .composer:focus-within {
+        border-color: var(--accent);
+      }
+
+      .composer input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #fff;
+        font-size: 0.95rem;
+        padding: 8px 10px;
+      }
+
+      .composer input::placeholder {
+        color: var(--muted);
+      }
+
+      /* Cards for Features / History / About */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 14px;
+        margin-top: 12px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        transition: border-color 0.18s ease, transform 0.18s ease;
+      }
+
+      .card:hover {
+        border-color: rgba(124, 58, 237, 0.6);
+        transform: translateY(-2px);
+      }
+
+      .card h3 {
+        font-size: 1rem;
+        margin-bottom: 6px;
+      }
+
+      .card p {
+        font-size: 0.88rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .history-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+      }
+
+      footer {
+        text-align: center;
+        padding: 14px 16px;
+        font-size: 0.78rem;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .logo-spin, .dot { animation: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <div class="brand">
+          <div class="logo-wrap" aria-hidden="true">
+            <svg class="logo-spin" width="42" height="42" viewBox="0 0 64 64" fill="none">
+              <defs>
+                <linearGradient id="tridentGrad" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#1e40af" />
+                  <stop offset="100%" stop-color="#7c3aed" />
+                </linearGradient>
+              </defs>
+              <circle cx="32" cy="32" r="29" fill="url(#tridentGrad)" stroke="#a78bfa" stroke-width="1.5" />
+              <path d="M32 13V49" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+              <path d="M32 11L28.5 18H35.5L32 11Z" fill="#fff" />
+              <path d="M20 21V28C20 33.5 25.4 37.5 32 37.5C38.6 37.5 44 33.5 44 28V21" stroke="#fff" stroke-width="2.6" stroke-linecap="round" />
+              <path d="M20 17L17.2 22.5H22.8L20 17Z" fill="#fff" />
+              <path d="M44 17L41.2 22.5H46.8L44 17Z" fill="#fff" />
+            </svg>
+          </div>
+          <div>
+            <div class="brand-title">TridentX AI</div>
+            <div class="brand-tagline">Your Intelligent Assistant</div>
+          </div>
+        </div>
+
+        <nav class="tabs" aria-label="Navigation tabs">
+          <button class="tab-btn active" data-tab="chat">💬 Chat</button>
+          <button class="tab-btn" data-tab="features">⚡ Features</button>
+          <button class="tab-btn" data-tab="history">📜 History</button>
+          <button class="tab-btn" data-tab="about">ℹ️ About</button>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <!-- Chat Tab -->
+      <section id="tab-chat" class="panel active">
+        <div class="chat-toolbar">
+          <span style="font-size: 0.82rem; color: var(--muted);" id="thread-status">New conversation</span>
+          <div class="toolbar-actions">
+            <button class="btn" id="new-chat-btn">New Chat</button>
+            <button class="btn" id="clear-chat-btn">Clear Chat</button>
+          </div>
+        </div>
+
+        <div class="messages" id="messages">
+          <div class="empty-state" id="empty-state">
+            <div class="logo-wrap" style="margin: 0 auto; width: 58px; height: 58px;">
+              <svg class="logo-spin" width="58" height="58" viewBox="0 0 64 64" fill="none">
+                <circle cx="32" cy="32" r="29" fill="url(#tridentGrad)" stroke="#a78bfa" stroke-width="1.5" />
+                <path d="M32 13V49" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+                <path d="M32 11L28.5 18H35.5L32 11Z" fill="#fff" />
+                <path d="M20 21V28C20 33.5 25.4 37.5 32 37.5C38.6 37.5 44 33.5 44 28V21" stroke="#fff" stroke-width="2.6" stroke-linecap="round" />
+                <path d="M20 17L17.2 22.5H22.8L20 17Z" fill="#fff" />
+                <path d="M44 17L41.2 22.5H46.8L44 17Z" fill="#fff" />
+              </svg>
+            </div>
+            <h2>Welcome to TridentX AI</h2>
+            <p>Ask anything below. Your conversation stays in context across turns, and works seamlessly with built-in offline fallback.</p>
+          </div>
+        </div>
+
+        <form class="composer" id="chat-form">
+          <input
+            type="text"
+            id="chat-input"
+            placeholder="Message TridentX AI..."
+            autocomplete="off"
+          />
+          <button type="submit" class="btn btn-primary" id="send-btn">Send</button>
+        </form>
+      </section>
+
+      <!-- Features Tab -->
+      <section id="tab-features" class="panel">
+        <h2 style="font-size: 1.35rem;">Features</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>⚡ Groq Llama 3.3 Speed</h3>
+            <p>Connects through your Express backend to Groq's llama-3.3-70b-versatile model for rapid, intelligent replies.</p>
+          </div>
+          <div class="card">
+            <h3>🧠 Conversation Context</h3>
+            <p>Remembers earlier messages in the active thread so follow-up questions feel natural and connected.</p>
+          </div>
+          <div class="card">
+            <h3>🔒 Zero Keys in Frontend</h3>
+            <p>Your API key stays inside server.js. The browser communicates strictly with /api/chat.</p>
+          </div>
+          <div class="card">
+            <h3>🛡️ Built-in Offline Fallback</h3>
+            <p>Even if the server is offline, TridentX AI provides friendly built-in responses without crashing.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- History Tab -->
+      <section id="tab-history" class="panel">
+        <div class="chat-toolbar">
+          <h2 style="font-size: 1.35rem;">Chat History</h2>
+          <button class="btn" id="clear-history-btn">Clear All History</button>
+        </div>
+        <div class="grid" id="history-list" style="grid-template-columns: 1fr;"></div>
+      </section>
+
+      <!-- About Tab -->
+      <section id="tab-about" class="panel">
+        <div class="card">
+          <h3>About TridentX AI</h3>
+          <p style="margin-top: 8px;">
+            TridentX AI is a lightweight full-stack AI assistant built with a clean Express.js proxy backend and a responsive dark-themed frontend.
+          </p>
+          <p style="margin-top: 10px;">
+            Backend endpoint: <strong>POST /api/chat</strong> • Model: <strong>llama-3.3-70b-versatile</strong> • Shortcuts: Press <strong>Enter</strong> to send.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      TridentX AI © 2025 — Powered by Groq Llama 3.3
+    </footer>
+
+    <script>
+      const API_ENDPOINT =
+        window.location.protocol === "file:"
+          ? "http://localhost:3000/api/chat"
+          : "/api/chat";
+
+      const STORAGE_KEY = "tridentx_history_v1";
+      let sessions = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+      let currentSessionId = null;
+      let conversation = [];
+
+      const messagesEl = document.getElementById("messages");
+      const emptyStateEl = document.getElementById("empty-state");
+      const threadStatusEl = document.getElementById("thread-status");
+      const chatForm = document.getElementById("chat-form");
+      const chatInput = document.getElementById("chat-input");
+      const historyListEl = document.getElementById("history-list");
+
+      function saveSessions() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(sessions));
+      }
+
+      function tridentAvatarSVG() {
+        return `
+          <svg class="avatar" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+            <circle cx="32" cy="32" r="29" fill="url(#tridentGrad)" stroke="#a78bfa" stroke-width="1.5" />
+            <path d="M32 14V48" stroke="#fff" stroke-width="3" stroke-linecap="round" />
+            <path d="M32 12L28.5 18H35.5L32 12Z" fill="#fff" />
+            <path d="M20 22V28C20 33.5 25.4 37.5 32 37.5C38.6 37.5 44 33.5 44 28V22" stroke="#fff" stroke-width="2.6" stroke-linecap="round" />
+            <path d="M20 18L17.2 23H22.8L20 18Z" fill="#fff" />
+            <path d="M44 18L41.2 23H46.8L44 18Z" fill="#fff" />
+          </svg>
+        `;
+      }
+
+      function renderMessages() {
+        messagesEl.innerHTML = "";
+        if (conversation.length === 0) {
+          messagesEl.appendChild(emptyStateEl);
+          emptyStateEl.style.display = "block";
+          threadStatusEl.textContent = "New conversation";
+          return;
+        }
+
+        threadStatusEl.textContent = `${conversation.length} message(s) in thread`;
+        conversation.forEach((msg) => {
+          const row = document.createElement("div");
+          row.className = `msg-row ${msg.role}`;
+
+          if (msg.role === "assistant") {
+            row.insertAdjacentHTML("beforeend", tridentAvatarSVG());
+          }
+
+          const bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.textContent = msg.content;
+          row.appendChild(bubble);
+
+          messagesEl.appendChild(row);
+        });
+
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function showTyping() {
+        const row = document.createElement("div");
+        row.className = "msg-row assistant";
+        row.id = "typing-row";
+        row.insertAdjacentHTML("beforeend", tridentAvatarSVG());
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.innerHTML = `<div class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
+        row.appendChild(bubble);
+
+        messagesEl.appendChild(row);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      }
+
+      function hideTyping() {
+        const row = document.getElementById("typing-row");
+        if (row) row.remove();
+      }
+
+      function offlineFallback(text) {
+        const lower = text.toLowerCase();
+        if (/^(hi|hello|hey)\b/.test(lower)) {
+          return "Hello! I'm TridentX AI. The backend server appears offline right now, so I'm replying with my friendly built-in fallback!";
+        }
+        return `Offline Fallback: I received "${text}". Start server.js with "node server.js" to connect to live Groq Llama 3.3 responses.`;
+      }
+
+      function persistCurrentThread() {
+        if (conversation.length === 0) return;
+        const title = conversation[0].content.slice(0, 48);
+        if (!currentSessionId) {
+          currentSessionId = "s-" + Date.now();
+          sessions.unshift({ id: currentSessionId, title, messages: [...conversation], updatedAt: Date.now() });
+        } else {
+          const idx = sessions.findIndex((s) => s.id === currentSessionId);
+          if (idx >= 0) {
+            sessions[idx] = { ...sessions[idx], title, messages: [...conversation], updatedAt: Date.now() };
+          } else {
+            sessions.unshift({ id: currentSessionId, title, messages: [...conversation], updatedAt: Date.now() });
+          }
+        }
+        saveSessions();
+      }
+
+      function renderHistory() {
+        historyListEl.innerHTML = "";
+        if (sessions.length === 0) {
+          historyListEl.innerHTML = `<div class="card"><p>No saved conversations yet. Start chatting to build your history!</p></div>`;
+          return;
+        }
+        sessions.forEach((s) => {
+          const card = document.createElement("div");
+          card.className = "card history-item";
+          card.innerHTML = `
+            <div>
+              <h3>${s.title.replace(/</g, "&lt;")}</h3>
+              <p>${s.messages.length} messages • ${new Date(s.updatedAt).toLocaleString()}</p>
+            </div>
+            <button class="btn">Open</button>
+          `;
+          card.addEventListener("click", () => {
+            currentSessionId = s.id;
+            conversation = [...s.messages];
+            renderMessages();
+            switchTab("chat");
+          });
+          historyListEl.appendChild(card);
+        });
+      }
+
+      function switchTab(tabName) {
+        document.querySelectorAll(".tab-btn").forEach((b) => {
+          b.classList.toggle("active", b.dataset.tab === tabName);
+        });
+        document.querySelectorAll(".panel").forEach((p) => {
+          p.classList.toggle("active", p.id === `tab-${tabName}`);
+        });
+        if (tabName === "history") renderHistory();
+      }
+
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+      });
+
+      document.getElementById("new-chat-btn").addEventListener("click", () => {
+        currentSessionId = null;
+        conversation = [];
+        renderMessages();
+      });
+
+      document.getElementById("clear-chat-btn").addEventListener("click", () => {
+        conversation = [];
+        if (currentSessionId) {
+          sessions = sessions.filter((s) => s.id !== currentSessionId);
+          currentSessionId = null;
+          saveSessions();
+        }
+        renderMessages();
+      });
+
+      document.getElementById("clear-history-btn").addEventListener("click", () => {
+        sessions = [];
+        currentSessionId = null;
+        conversation = [];
+        saveSessions();
+        renderHistory();
+        renderMessages();
+      });
+
+      chatForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const text = chatInput.value.trim();
+        if (!text) return;
+
+        const historyForApi = [...conversation];
+        conversation.push({ role: "user", content: text });
+        chatInput.value = "";
+        renderMessages();
+        showTyping();
+
+        let replyText = "";
+        try {
+          const res = await fetch(API_ENDPOINT, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text, history: historyForApi }),
+          });
+          if (!res.ok) throw new Error("Server error");
+          const data = await res.json();
+          replyText = data.reply || offlineFallback(text);
+        } catch {
+          replyText = offlineFallback(text);
+        }
+
+        hideTyping();
+        conversation.push({ role: "assistant", content: replyText });
+        persistCurrentThread();
+        renderMessages();
+      });
+
+      renderMessages();
+    </script>
+  </body>
+</html>
