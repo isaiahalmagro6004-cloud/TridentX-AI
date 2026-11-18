@@ -1,87 +1,56 @@
-const express = require("express");
-const cors = require("cors");
-const fetch = require("node-fetch");
-const path = require("path");
+const express = require('express');
+const cors = require('cors');
+const fetch = require('node-fetch');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
-
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-console.log("🔑 API Key loaded:", GROQ_API_KEY ? "✅ YES (" + GROQ_API_KEY.substring(0, 5) + "...)" : "❌ NOT SET");
-
-const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_MODEL = "llama-3.3-70b-versatile";
-
-const SYSTEM_PROMPT = "You are TridentX AI, a sharp, helpful, and concise intelligent assistant powered by Groq Llama 3.3.";
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
-app.use(express.json({ limit: "1mb" }));
-app.use(express.static(path.join(__dirname)));
+app.use(express.json());
+app.use(express.static('.'));
 
-function getFallbackReply(userMessage, history) {
-  const lower = userMessage.toLowerCase().trim();
-  if (/^(hi|hello|hey)\b/.test(lower)) {
-    return "Hello! I'm TridentX AI. Groq API is not active yet, but everything else is ready!";
-  }
-  return `I received "${userMessage}". Groq inference is currently unavailable, so I'm responding with this fallback message.`;
-}
+// ✅ KEY IS LOADED FROM RENDER ENVIRONMENT VARIABLES — NOT IN CODE!
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 
-app.post("/api/chat", async (req, res) => {
+const SYSTEM_PROMPT = "You are TridentX AI, a helpful, friendly assistant. Keep answers clear and concise.";
+
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/index.html');
+});
+
+app.post('/api/chat', async (req, res) => {
   try {
-    const { message, history = [] } = req.body || {};
-    
-    if (!message || typeof message !== "string" || !message.trim()) {
-      return res.status(400).json({ error: "Message is required." });
+    const userMessage = req.body.message;
+
+    if (!GEMINI_API_KEY) {
+      return res.json({ reply: "⚠️ API key not set. Add GEMINI_API_KEY in Render → Environment." });
     }
 
-    if (!GROQ_API_KEY) {
-      return res.json({
-        reply: getFallbackReply(message.trim(), history),
-        fallback: true
-      });
-    }
-
-    const messages = [
-      { role: "system", content: SYSTEM_PROMPT },
-      ...history.slice(-20),
-      { role: "user", content: message.trim() }
-    ];
-
-    const response = await fetch(GROQ_URL, {
+    const response = await fetch(GEMINI_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${GROQ_API_KEY}`
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages,
-        temperature: 0.7,
-        max_tokens: 1024
+        contents: [
+          { parts: [{ text: SYSTEM_PROMPT }] },
+          { parts: [{ text: userMessage }] }
+        ]
       })
     });
 
-    console.log("📡 Groq status:", response.status);
-
-    if (!response.ok) {
-      return res.json({ 
-        reply: getFallbackReply(message.trim(), history),
-        fallback: true 
-      });
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error("API Error:", data.error);
+      return res.json({ reply: "❌ Error: " + data.error.message });
     }
 
-    const data = await response.json();
-    const reply = data?.choices?.[0]?.message?.content?.trim();
-    
-    if (!reply) throw new Error("No reply from API");
-    
-    return res.json({ reply, fallback: false });
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't get a reply.";
+    res.json({ reply });
+
   } catch (err) {
-    console.error("❌ Server error:", err.message);
-    return res.json({ 
-      reply: "Network error. Please try again.",
-      fallback: true
-    });
+    console.error("Server Error:", err);
+    res.json({ reply: "⚠️ Connection error. Please try again." });
   }
 });
 
