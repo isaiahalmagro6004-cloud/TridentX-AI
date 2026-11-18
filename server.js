@@ -3,24 +3,20 @@ const cors = require("cors");
 const fetch = require("node-fetch");
 const path = require("path");
 
-const __filename = __filename;
-const __dirname = path.dirname(__filename);
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-console.log("API Key loaded:", GROQ_API_KEY ? "✅ Found" : "❌ NOT SET");
+console.log("🔑 API Key loaded:", GROQ_API_KEY ? "✅ YES (" + GROQ_API_KEY.substring(0, 5) + "...)" : "❌ NOT SET");
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 
-const SYSTEM_PROMPT =
-  "You are TridentX AI, a sharp, helpful, and concise intelligent assistant powered by Groq Llama 3.3.";
+const SYSTEM_PROMPT = "You are TridentX AI, a sharp, helpful, and concise intelligent assistant powered by Groq Llama 3.3.";
 
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname)));
 
 function getFallbackReply(userMessage, history) {
   const lower = userMessage.toLowerCase().trim();
@@ -34,7 +30,7 @@ app.post("/api/chat", async (req, res) => {
   try {
     const { message, history = [] } = req.body || {};
     
-    if (!message || !message.trim()) {
+    if (!message || typeof message !== "string" || !message.trim()) {
       return res.status(400).json({ error: "Message is required." });
     }
 
@@ -65,9 +61,13 @@ app.post("/api/chat", async (req, res) => {
       })
     });
 
+    console.log("📡 Groq status:", response.status);
+
     if (!response.ok) {
-      console.error("Groq error:", response.status);
-      return res.json({ reply: getFallbackReply(message.trim(), history), fallback: true });
+      return res.json({ 
+        reply: getFallbackReply(message.trim(), history),
+        fallback: true 
+      });
     }
 
     const data = await response.json();
@@ -77,7 +77,7 @@ app.post("/api/chat", async (req, res) => {
     
     return res.json({ reply, fallback: false });
   } catch (err) {
-    console.error("Server error:", err.message);
+    console.error("❌ Server error:", err.message);
     return res.json({ 
       reply: "Network error. Please try again.",
       fallback: true
@@ -86,5 +86,5 @@ app.post("/api/chat", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`TridentX AI running on port ${PORT}`);
+  console.log(`🚀 TridentX AI running on port ${PORT}`);
 });
