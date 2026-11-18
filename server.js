@@ -10,10 +10,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
-// Replace with your Groq API key locally or set GROQ_API_KEY in your environment
+// Load API key from environment variable — NEVER hardcode it here!
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
+console.log("API Key loaded:", GROQ_API_KEY ? "✅ Found (" + GROQ_API_KEY.substring(0, 5) + "...)" : "❌ NOT SET");
+
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 
@@ -31,9 +33,9 @@ function getFallbackReply(userMessage, history) {
   }
   if (lower.includes("remember") || lower.includes("history")) {
     const count = history.filter((m) => m.role === "user").length;
-    return `I have ${count} earlier user message(s) in this thread's memory. Once a valid GROQ_API_KEY is set in server.js, Llama 3.3 will answer using the full context.`;
+    return `I have ${count} earlier user message(s) in this thread's memory. Once a valid GROQ_API_KEY is set in environment variables, Llama 3.3 will answer using the full context.`;
   }
-  return `I received "${userMessage}". Live Groq inference is currently unavailable (check your GROQ_API_KEY in server.js or internet connection), so I'm responding with this friendly fallback message.`;
+  return `I received "${userMessage}". Live Groq inference is currently unavailable (check your GROQ_API_KEY environment variable or internet connection), so I'm responding with this friendly fallback message.`;
 }
 
 app.post("/api/chat", async (req, res) => {
@@ -57,7 +59,7 @@ app.post("/api/chat", async (req, res) => {
           .map((m) => ({ role: m.role, content: m.content.trim() }))
       : [];
 
-    if (!GROQ_API_KEY || GROQ_API_KEY === "YOUR_GROQ_API_KEY_HERE") {
+    if (!GROQ_API_KEY) {
       return res.json({
         reply: getFallbackReply(message.trim(), cleanHistory),
         fallback: true,
@@ -84,8 +86,11 @@ app.post("/api/chat", async (req, res) => {
       }),
     });
 
+    console.log("Groq API status:", response.status);
+
     if (!response.ok) {
-      console.error("Groq API error:", response.status);
+      const errorText = await response.text();
+      console.error("Groq API error:", response.status, errorText);
       return res.json({
         reply: getFallbackReply(message.trim(), cleanHistory),
         fallback: true,
@@ -102,17 +107,4 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
-    return res.json({ reply, model: GROQ_MODEL, fallback: false });
-  } catch (err) {
-    console.error("Server error:", err.message);
-    return res.json({
-      reply:
-        "I had trouble reaching the Groq network right now, so here is a friendly fallback reply. Please try again in a moment!",
-      fallback: true,
-    });
-  }
-});
-
-app.listen(PORT, () => {
-  console.log(`TridentX AI server running at http://localhost:${PORT}`);
-});
+    return...
